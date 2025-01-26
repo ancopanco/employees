@@ -2,10 +2,7 @@ package com.employees.employees.repository.impl;
 
 import com.employees.employees.dto.TeamDto;
 import com.employees.employees.entity.Team;
-import com.employees.employees.exception.DeleteFailedException;
-import com.employees.employees.exception.TeamDoesNotExists;
-import com.employees.employees.exception.TeamAlreadyExistsException;
-import com.employees.employees.exception.UpdateFailedException;
+import com.employees.employees.exception.*;
 import com.employees.employees.mapper.TeamMapper;
 import com.employees.employees.repository.TeamRepository;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -34,7 +31,7 @@ public class TeamRepositoryImpl implements TeamRepository {
         //check if team with given name already exists (name is unique)
         Optional<TeamDto> teamDtoOptional = getTeamByName(name);
         if (teamDtoOptional.isPresent()) {
-            throw new TeamAlreadyExistsException("Team name already exists");
+            throw new RecordAlreadyExistsException("Team name already exists");
         }
 
         String sql = "INSERT INTO Team (name) VALUES (:name)";
@@ -42,7 +39,11 @@ public class TeamRepositoryImpl implements TeamRepository {
         parameters.addValue("name", name);
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbcTemplate.update(sql, parameters, keyHolder);
+
+        int rowsAffected = jdbcTemplate.update(sql, parameters, keyHolder);
+        if (rowsAffected == 0) {
+            throw new CreateFailedException("Create failed: no rows were affected");
+        }
 
         Integer generatedKey = keyHolder.getKey().intValue();
 
@@ -88,12 +89,12 @@ public class TeamRepositoryImpl implements TeamRepository {
         //find team by id
         Optional<TeamDto> teamById = getTeamById(id);
         if (!teamById.isPresent()) {
-            throw new TeamDoesNotExists("Team id does not exists");
+            throw new RecordDoesNotExists("Team id does not exists");
         }
         //if try to update name with name which already exists
         Optional<TeamDto> teamByName = getTeamByName(teamDto.getName());
         if (teamByName.isPresent() && !teamByName.get().getId().equals(id)) {
-            throw new TeamAlreadyExistsException("Team name already exists");
+            throw new RecordAlreadyExistsException("Team name already exists");
         }
 
         String sql = "UPDATE Team SET name = :name WHERE id = :id";
@@ -104,9 +105,8 @@ public class TeamRepositoryImpl implements TeamRepository {
         if (rowsAffected == 0) {
             throw new UpdateFailedException("Update failed: no rows were affected");
         }
-
-        return getTeamById(id)
-                .orElseThrow(() -> new TeamDoesNotExists("Team id does not exists"));
+        teamDto.setId(id);
+        return teamDto;
 
     }
 
@@ -114,7 +114,7 @@ public class TeamRepositoryImpl implements TeamRepository {
     public void delete(Integer id) {
         Optional<TeamDto> teamDtoOptional = getTeamById(id);
         if (!teamDtoOptional.isPresent()) {
-            throw new TeamDoesNotExists(String.format("Team with ID %s does not exists", id));
+            throw new RecordDoesNotExists(String.format("Team with ID %s does not exists", id));
         }
 
         String sql = "DELETE FROM Team WHERE id = :id";

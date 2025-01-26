@@ -11,23 +11,33 @@ import java.time.LocalDateTime;
 
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
-    @ExceptionHandler(TeamAlreadyExistsException.class)
-    public ResponseEntity<ErrorDetails> handleTeamAlreadyExistsException(TeamAlreadyExistsException exception, WebRequest webRequest) {
+    @ExceptionHandler(RecordAlreadyExistsException.class)
+    public ResponseEntity<ErrorDetails> handleRecordAlreadyExistsException(RecordAlreadyExistsException exception, WebRequest webRequest) {
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 exception.getMessage(),
                 webRequest.getDescription(false),
-                "TEAM_ALREADY_EXISTS");
+                "RECORD_ALREADY_EXISTS");
         return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(TeamDoesNotExists.class)
-    public ResponseEntity<ErrorDetails> handleTeamIdDoesNotExists(TeamDoesNotExists exception, WebRequest webRequest) {
+    @ExceptionHandler(RecordDoesNotExists.class)
+    public ResponseEntity<ErrorDetails> handleRecordIdDoesNotExists(RecordDoesNotExists exception, WebRequest webRequest) {
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 exception.getMessage(),
                 webRequest.getDescription(false),
-                "TEAM_DOES_NOT_EXISTS");
+                "RECORD_DOES_NOT_EXISTS");
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(CreateFailedException.class)
+    public ResponseEntity<ErrorDetails> handleCreateFailedException(UpdateFailedException exception, WebRequest webRequest) {
+        ErrorDetails errorDetails = new ErrorDetails(
+                LocalDateTime.now(),
+                exception.getMessage(),
+                webRequest.getDescription(false),
+                "CREATE_FAILED");
         return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
     }
 

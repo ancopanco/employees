@@ -58,6 +58,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
         String sql = "SELECT * from Employee";
         return jdbcTemplate.query(sql, this::employeeMapper);
     }
+    @Override
     public Optional<Employee> getEmployeeById(Long id) {
         String sql = "SELECT * FROM Employee WHERE id = :id";
         MapSqlParameterSource parameters = new MapSqlParameterSource();

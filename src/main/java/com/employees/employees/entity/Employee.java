@@ -4,8 +4,8 @@ import lombok.Data;
 
 @Data
 public class Employee {
-    Long id;
-    String name;
-    Boolean isTeamLead;
-    Integer idTeam;
+    private Long id;
+    private String name;
+    private Boolean isTeamLead;
+    private Integer idTeam;
 }

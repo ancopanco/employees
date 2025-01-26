@@ -32,7 +32,11 @@ public class EmployeeController {
     )
     @ApiResponse(
             responseCode = "400",
-            description = "Create failed : Employee id already exists or team with idTeam does not exits."
+            description = "Create failed : Employee id already exists."
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Create failed : Team with idTeam does not exits."
     )
     @PostMapping
     public ResponseEntity<EmployeeDto> createEmployee(@Valid @RequestBody EmployeeDto employeeDto) {
@@ -63,8 +67,8 @@ public class EmployeeController {
             description = "Get succeed."
     )
     @ApiResponse(
-            responseCode = "400",
-            description = "Get failed - Employee with this id does not exist."
+            responseCode = "404",
+            description = "Get failed - Employee with this id does not exists."
     )
     @GetMapping("/{id}")
     public ResponseEntity<EmployeeDto> getById(
@@ -84,7 +88,11 @@ public class EmployeeController {
     )
     @ApiResponse(
             responseCode = "400",
-            description = "Updated failed - employee id does not exists or team name already exists."
+            description = "Updated failed - Team name already exists."
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Updated failed - Employee id does not exists."
     )
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeDto> updateEmployee(@PathVariable("id") Long id, @Valid @RequestBody EmployeeDto employeeDto) {
@@ -104,7 +112,7 @@ public class EmployeeController {
             description = "Delete succeed."
     )
     @ApiResponse(
-            responseCode = "400",
+            responseCode = "404",
             description = "Delete failed: Employee id does not exists."
     )
     @DeleteMapping("/{id}")

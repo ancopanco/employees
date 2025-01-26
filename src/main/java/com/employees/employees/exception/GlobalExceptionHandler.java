@@ -16,54 +16,37 @@ import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
-    @ExceptionHandler(RecordAlreadyExistsException.class)
-    public ResponseEntity<ErrorDetails> handleRecordAlreadyExistsException(RecordAlreadyExistsException exception, WebRequest webRequest) {
+    private ResponseEntity<ErrorDetails> buildErrorResponse(Exception exception, WebRequest webRequest, String errorCode, HttpStatus status) {
         ErrorDetails errorDetails = new ErrorDetails(
                 LocalDateTime.now(),
                 exception.getMessage(),
                 webRequest.getDescription(false),
-                "RECORD_ALREADY_EXISTS");
-        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+                errorCode);
+        return new ResponseEntity<>(errorDetails, status);
+    }
+    @ExceptionHandler(RecordAlreadyExistsException.class)
+    public ResponseEntity<ErrorDetails> handleRecordAlreadyExistsException(RecordAlreadyExistsException exception, WebRequest webRequest) {
+        return buildErrorResponse(exception, webRequest,"RECORD_ALREADY_EXISTS", HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(RecordDoesNotExists.class)
     public ResponseEntity<ErrorDetails> handleRecordIdDoesNotExists(RecordDoesNotExists exception, WebRequest webRequest) {
-        ErrorDetails errorDetails = new ErrorDetails(
-                LocalDateTime.now(),
-                exception.getMessage(),
-                webRequest.getDescription(false),
-                "RECORD_DOES_NOT_EXISTS");
-        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(exception, webRequest,"RECORD_DOES_NOT_EXISTS", HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(CreateFailedException.class)
     public ResponseEntity<ErrorDetails> handleCreateFailedException(UpdateFailedException exception, WebRequest webRequest) {
-        ErrorDetails errorDetails = new ErrorDetails(
-                LocalDateTime.now(),
-                exception.getMessage(),
-                webRequest.getDescription(false),
-                "CREATE_FAILED");
-        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(exception, webRequest,"CREATE_FAILED", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(UpdateFailedException.class)
     public ResponseEntity<ErrorDetails> handleUpdateFailedException(UpdateFailedException exception, WebRequest webRequest) {
-        ErrorDetails errorDetails = new ErrorDetails(
-                LocalDateTime.now(),
-                exception.getMessage(),
-                webRequest.getDescription(false),
-                "UPDATE_FAILED");
-        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(exception, webRequest,"UPDATE_FAILED", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(DeleteFailedException.class)
     public ResponseEntity<ErrorDetails> handleDeleteFailedException(DeleteFailedException exception, WebRequest webRequest) {
-        ErrorDetails errorDetails = new ErrorDetails(
-                LocalDateTime.now(),
-                exception.getMessage(),
-                webRequest.getDescription(false),
-                "DELETE_FAILED");
-        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(exception, webRequest,"DELETE_FAILED", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
@@ -71,7 +54,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                                                                   HttpHeaders headers,
                                                                   HttpStatus status,
                                                                   WebRequest webRequest) {
-
         Map<String, String> fieldErrors = new HashMap<>();
         exception.getBindingResult().getFieldErrors().forEach((FieldError error) ->
                 fieldErrors.put(error.getField(), error.getDefaultMessage())
@@ -83,5 +65,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         responseBody.put("details", fieldErrors);
 
         return new ResponseEntity<>(responseBody, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorDetails> handleAllExceptions(Exception exception, WebRequest webRequest) {
+        return buildErrorResponse(exception, webRequest, "INTERNAL_SERVER_ERROR", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

@@ -35,9 +35,7 @@ public class TeamController {
             description = "Create failed : Team name already exists."
     )
     @PostMapping
-    public ResponseEntity<TeamDto> create(
-            @Parameter(description = "Team name is unique, not blank.", required = true)
-            @Valid @RequestBody TeamDto teamDto) {
+    public ResponseEntity<TeamDto> create(@Valid @RequestBody TeamDto teamDto) {
         TeamDto saved = teamService.create(teamDto.getName());
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
     }
@@ -65,8 +63,8 @@ public class TeamController {
             description = "Get succeed."
     )
     @ApiResponse(
-            responseCode = "400",
-            description = "Get failed - Employee with this id does not exist."
+            responseCode = "404",
+            description = "Get failed - Employee with this id does not exists."
     )
     @GetMapping("/{id}")
     public ResponseEntity<TeamDto> getById(
@@ -85,13 +83,16 @@ public class TeamController {
     )
     @ApiResponse(
             responseCode = "400",
-            description = "Updated failed - team id does not exists or team name already exists."
+            description = "Updated failed - Team name already exists."
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Updated failed - Team id does not exists ."
     )
     @PutMapping("/{id}")
     public ResponseEntity<TeamDto> update(
             @Parameter(description = "Id of team that is going to be updated.", required = true)
             @PathVariable("id") Integer id,
-            @Parameter(description = "Team fields that we want to update in team.", required = true)
             @Valid @RequestBody TeamDto teamDto) {
 
         if (teamDto.getId() != null && !id.equals(teamDto.getId())) {
@@ -110,7 +111,7 @@ public class TeamController {
             description = "Delete succeed."
     )
     @ApiResponse(
-            responseCode = "400",
+            responseCode = "404",
             description = "Delete failed : Team id does not exists."
     )
     @DeleteMapping("/{id}")

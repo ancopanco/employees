@@ -14,7 +14,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Repository
 public class EmployeeRepositoryImpl implements EmployeeRepository {
@@ -73,11 +72,18 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
 
     @Override
     public Employee update(Long id, Employee employee) {
-        //find team by id
         Optional<Employee> employeeByIdOptional = getEmployeeById(id);
         if (!employeeByIdOptional.isPresent()) {
             throw new RecordDoesNotExists("Employee id does not exists");
         }
+        if (employee.getIdTeam() != null) {
+            Optional<Team> team = teamRepository.getTeamById(employee.getIdTeam());
+
+            if (!team.isPresent() || (team.isPresent() && team.get().getIsDeleted())) {
+                throw new RecordDoesNotExists("Team with idTeam does not exits");
+            }
+        }
+
         Employee employeeById = employeeByIdOptional.get();
         String sql = "UPDATE Employee SET name = :name, isTeamLead = :isTeamLead, idTeam = :idTeam WHERE id = :id";
         MapSqlParameterSource parameters = new MapSqlParameterSource()

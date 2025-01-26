@@ -19,18 +19,19 @@ public class TeamController {
         this.teamService = teamService;
     }
 
+    @PostMapping
+    public ResponseEntity<TeamDto> create(@Valid @RequestBody TeamDto teamDto) {
+        TeamDto saved = teamService.create(teamDto.getName());
+        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+    }
+
     @GetMapping
     public ResponseEntity<List<TeamDto>> getAll() {
         List<TeamDto> teams = teamService.getAll();
         return new ResponseEntity<>(teams, HttpStatus.OK);
     }
 
-    @PostMapping
-    public ResponseEntity<TeamDto> create(@Valid @RequestBody TeamDto teamDto) {
-        TeamDto saved = teamService.create(teamDto.getName());
-        return new ResponseEntity<>(saved, HttpStatus.CREATED);
-    }
-    @PutMapping("{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<TeamDto> update(@PathVariable("id") Integer id, @Valid @RequestBody TeamDto teamDto) {
 
         if (teamDto.getId() != null && !id.equals(teamDto.getId())) {
@@ -40,7 +41,7 @@ public class TeamController {
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable("id") Integer id) {
         teamService.delete(id);
         return new ResponseEntity<>("User successfully deleted", HttpStatus.OK);

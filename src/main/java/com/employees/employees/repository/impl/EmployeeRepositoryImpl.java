@@ -1,10 +1,8 @@
 package com.employees.employees.repository.impl;
 
-import com.employees.employees.dto.EmployeeDto;
 import com.employees.employees.entity.Employee;
 import com.employees.employees.entity.Team;
 import com.employees.employees.exception.*;
-import com.employees.employees.mapper.EmployeeMapper;
 import com.employees.employees.repository.EmployeeRepository;
 import com.employees.employees.repository.TeamRepository;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -29,13 +27,13 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
     }
 
     @Override
-    public EmployeeDto create(EmployeeDto employeeDto) {
-        Optional<EmployeeDto> employeeDtoOptional = getEmployeeById(employeeDto.getId());
+    public Employee create(Employee employee) {
+        Optional<Employee> employeeDtoOptional = getEmployeeById(employee.getId());
         if (employeeDtoOptional.isPresent()) {
             throw new RecordAlreadyExistsException("Employee id already exists");
         }
 
-        Optional<Team> team = teamRepository.getTeamById(employeeDto.getIdTeam());
+        Optional<Team> team = teamRepository.getTeamById(employee.getIdTeam());
 
         if (!team.isPresent() || (team.isPresent() && team.get().getIsDeleted())) {
             throw new RecordDoesNotExists("Team with idTeam does not exits");
@@ -43,61 +41,48 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
 
         String sql = "INSERT INTO Employee (id, name, isTeamLead, idTeam) VALUES (:id, :name, :isTeamLead, :idTeam)";
         MapSqlParameterSource parameters = new MapSqlParameterSource();
-        parameters.addValue("id", employeeDto.getId());
-        parameters.addValue("name", employeeDto.getName());
-        parameters.addValue("isTeamLead", employeeDto.getIsTeamLead());
-        parameters.addValue("idTeam", employeeDto.getIdTeam());
+        parameters.addValue("id", employee.getId());
+        parameters.addValue("name", employee.getName());
+        parameters.addValue("isTeamLead", employee.getIsTeamLead());
+        parameters.addValue("idTeam", employee.getIdTeam());
 
         int rowsAffected = jdbcTemplate.update(sql, parameters);
         if (rowsAffected == 0) {
             throw new CreateFailedException("Create failed: no rows were affected");
         }
-        return employeeDto;
+        return employee;
     }
 
     @Override
-    public List<EmployeeDto> getAll() {
+    public List<Employee> getAll() {
         String sql = "SELECT * from Employee";
-        List<Employee> employees = jdbcTemplate.query(sql, this::employeeMapper);
-        return employees.stream().map(employee -> EmployeeMapper.MAPPER.mapToEmployeeDto(employee)).collect(Collectors.toList());
+        return jdbcTemplate.query(sql, this::employeeMapper);
     }
-    public Optional<EmployeeDto> getEmployeeById(Long id) {
+    public Optional<Employee> getEmployeeById(Long id) {
         String sql = "SELECT * FROM Employee WHERE id = :id";
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("id", id);
         try {
-            //todo da li new BeanPropertyRowMapper<>(Employee.class)
             Employee employee = jdbcTemplate.queryForObject(sql, parameters, this::employeeMapper);
-            return Optional.of(EmployeeMapper.MAPPER.mapToEmployeeDto(employee));
-        } catch (EmptyResultDataAccessException e) {
-            return Optional.empty();
-        }
-    }
-
-    public Optional<EmployeeDto> getTeamByName(String name) {
-        String sql = "SELECT * FROM Employee WHERE name = :name";
-        MapSqlParameterSource parameters = new MapSqlParameterSource();
-        parameters.addValue("name", name);
-        try {
-            Employee employee = jdbcTemplate.queryForObject(sql, parameters, this::employeeMapper);
-            return Optional.of(EmployeeMapper.MAPPER.mapToEmployeeDto(employee));
+            return Optional.of(employee);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
     }
 
     @Override
-    public EmployeeDto update(Long id, EmployeeDto employeeDto) {
+    public Employee update(Long id, Employee employee) {
         //find team by id
-        Optional<EmployeeDto> employeeById = getEmployeeById(id);
-        if (!employeeById.isPresent()) {
+        Optional<Employee> employeeByIdOptional = getEmployeeById(id);
+        if (!employeeByIdOptional.isPresent()) {
             throw new RecordDoesNotExists("Employee id does not exists");
         }
+        Employee employeeById = employeeByIdOptional.get();
         String sql = "UPDATE Employee SET name = :name, isTeamLead = :isTeamLead, idTeam = :idTeam WHERE id = :id";
         MapSqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("name", employeeDto.getName())
-                .addValue("isTeamLead", employeeDto.getIsTeamLead())
-                .addValue("idTeam", employeeDto.getIdTeam())
+                .addValue("name", employee.getName() == null ? employeeById.getName() : employee.getName())
+                .addValue("isTeamLead", employee.getIsTeamLead() == null ? employeeById.getIsTeamLead() : employee.getIsTeamLead())
+                .addValue("idTeam", employee.getIdTeam() == null ? employeeById.getIdTeam() : employee.getIdTeam())
                 .addValue("id", id);
 
         int rowsAffected = jdbcTemplate.update(sql, parameters);
@@ -105,12 +90,13 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
             throw new UpdateFailedException("Update failed: no rows were affected");
         }
 
-        return employeeDto;
+        return getEmployeeById(id)
+                .orElseThrow(() -> new RecordDoesNotExists("Employee id does not exists"));
     }
 
     @Override
     public void delete(Long id) {
-        Optional<EmployeeDto> employeeDtoOptional = getEmployeeById(id);
+        Optional<Employee> employeeDtoOptional = getEmployeeById(id);
         if (!employeeDtoOptional.isPresent()) {
             throw new RecordDoesNotExists(String.format("Employee with ID %s does not exists", id));
         }
@@ -126,7 +112,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
     }
 
     @Override
-    public List<EmployeeDto> search(Long id, String name, Boolean isTeamLead, Integer idTeam) {
+    public List<Employee> search(Long id, String name, Boolean isTeamLead, Integer idTeam) {
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         StringBuilder sb = new StringBuilder();
         if (id != null) {
@@ -161,8 +147,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
         String where = sb.toString();
 
         String sql = String.format("SELECT * FROM Employee %s", where);
-        List<Employee> employees = jdbcTemplate.query(sql.toString(), parameters, this::employeeMapper);
-        return employees.stream().map(employee -> EmployeeMapper.MAPPER.mapToEmployeeDto(employee)).collect(Collectors.toList());
+        return jdbcTemplate.query(sql.toString(), parameters, this::employeeMapper);
     }
 
     private Employee employeeMapper(ResultSet rs, int rowNum) throws SQLException {

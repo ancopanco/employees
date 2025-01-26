@@ -103,8 +103,8 @@ public class TeamRepositoryImpl implements TeamRepository {
         if (rowsAffected == 0) {
             throw new UpdateFailedException("Update failed: no rows were affected");
         }
-        team.setId(id);
-        return team;
+        return getTeamById(id)
+                .orElseThrow(() -> new RecordDoesNotExists("Team id does not exists"));
     }
 
     @Override

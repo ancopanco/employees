@@ -86,9 +86,14 @@ public class TeamRepositoryImpl implements TeamRepository {
     @Override
     public TeamDto update(Integer id, TeamDto teamDto) {
         //find team by id
-        Optional<TeamDto> teamDtoOptional = getTeamById(id);
-        if (!teamDtoOptional.isPresent()) {
+        Optional<TeamDto> teamById = getTeamById(id);
+        if (!teamById.isPresent()) {
             throw new TeamDoesNotExists("Team id does not exists");
+        }
+        //if try to update name with name which already exists
+        Optional<TeamDto> teamByName = getTeamByName(teamDto.getName());
+        if (teamByName.isPresent() && !teamByName.get().getId().equals(id)) {
+            throw new TeamAlreadyExistsException("Team name already exists");
         }
 
         String sql = "UPDATE Team SET name = :name WHERE id = :id";

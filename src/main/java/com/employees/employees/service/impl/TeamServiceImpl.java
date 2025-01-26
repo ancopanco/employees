@@ -39,5 +39,4 @@ public class TeamServiceImpl implements TeamService {
     public List<TeamDto> search(Integer id, String name) {
         return teamRepository.search(id, name);
     }
-
 }

@@ -47,9 +47,7 @@ public class TeamController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<TeamDto>> search(
-            @RequestParam(required = false) Integer id,
-            @RequestParam(required = false) String name) {
+    public ResponseEntity<List<TeamDto>> search(@RequestParam(required = false) Integer id, @RequestParam(required = false) String name) {
 
         List<TeamDto> teams = teamService.search(id, name);
         return new ResponseEntity<>(teams, HttpStatus.OK);

@@ -2,9 +2,11 @@ package com.employees.employees.repository.impl;
 
 import com.employees.employees.dto.EmployeeDto;
 import com.employees.employees.entity.Employee;
+import com.employees.employees.entity.Team;
 import com.employees.employees.exception.*;
 import com.employees.employees.mapper.EmployeeMapper;
 import com.employees.employees.repository.EmployeeRepository;
+import com.employees.employees.repository.TeamRepository;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -19,9 +21,11 @@ import java.util.stream.Collectors;
 @Repository
 public class EmployeeRepositoryImpl implements EmployeeRepository {
     private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final TeamRepository teamRepository;
 
-    public EmployeeRepositoryImpl(NamedParameterJdbcTemplate jdbcTemplate) {
+    public EmployeeRepositoryImpl(NamedParameterJdbcTemplate jdbcTemplate, TeamRepository teamRepository) {
         this.jdbcTemplate = jdbcTemplate;
+        this.teamRepository = teamRepository;
     }
 
     @Override
@@ -29,6 +33,12 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
         Optional<EmployeeDto> employeeDtoOptional = getEmployeeById(employeeDto.getId());
         if (employeeDtoOptional.isPresent()) {
             throw new RecordAlreadyExistsException("Employee id already exists");
+        }
+
+        Optional<Team> team = teamRepository.getTeamById(employeeDto.getIdTeam());
+
+        if (!team.isPresent() || (team.isPresent() && team.get().getIsDeleted())) {
+            throw new RecordDoesNotExists("Team with idTeam does not exits");
         }
 
         String sql = "INSERT INTO Employee (id, name, isTeamLead, idTeam) VALUES (:id, :name, :isTeamLead, :idTeam)";

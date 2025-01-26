@@ -29,7 +29,7 @@ public class TeamRepositoryImpl implements TeamRepository {
     @Override
     public TeamDto create(String name) {
         //check if team with given name already exists (name is unique)
-        Optional<TeamDto> teamDtoOptional = getTeamByName(name);
+        Optional<Team> teamDtoOptional = getTeamByName(name);
         if (teamDtoOptional.isPresent()) {
             throw new RecordAlreadyExistsException("Team name already exists");
         }
@@ -55,30 +55,32 @@ public class TeamRepositoryImpl implements TeamRepository {
 
     @Override
     public List<TeamDto> getAll() {
-        String sql = "SELECT * from Team";
+        String sql = "SELECT * from Team WHERE isDeleted = FALSE";
         List<Team> teams = jdbcTemplate.query(sql, this::teamDtoMapper);
         return teams.stream().map(team -> TeamMapper.MAPPER.mapToTeamDto(team)).collect(Collectors.toList());
     }
 
-    public Optional<TeamDto> getTeamById(Integer id) {
+    @Override
+    public Optional<Team> getTeamById(Integer id) {
         String sql = "SELECT * FROM Team WHERE id = :id";
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("id", id);
         try {
             Team team = jdbcTemplate.queryForObject(sql, parameters, this::teamDtoMapper);
-            return Optional.of(TeamMapper.MAPPER.mapToTeamDto(team));
+            return Optional.of(team);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
     }
 
-    public Optional<TeamDto> getTeamByName(String name) {
+    @Override
+    public Optional<Team> getTeamByName(String name) {
         String sql = "SELECT * FROM Team WHERE name = :name";
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("name", name);
         try {
             Team team = jdbcTemplate.queryForObject(sql, parameters, this::teamDtoMapper);
-            return Optional.of(TeamMapper.MAPPER.mapToTeamDto(team));
+            return Optional.of(team);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -87,12 +89,12 @@ public class TeamRepositoryImpl implements TeamRepository {
     @Override
     public TeamDto update(Integer id, TeamDto teamDto) {
         //find team by id
-        Optional<TeamDto> teamById = getTeamById(id);
+        Optional<Team> teamById = getTeamById(id);
         if (!teamById.isPresent()) {
             throw new RecordDoesNotExists("Team id does not exists");
         }
         //if try to update name with name which already exists
-        Optional<TeamDto> teamByName = getTeamByName(teamDto.getName());
+        Optional<Team> teamByName = getTeamByName(teamDto.getName());
         if (teamByName.isPresent() && !teamByName.get().getId().equals(id)) {
             throw new RecordAlreadyExistsException("Team name already exists");
         }
@@ -107,19 +109,19 @@ public class TeamRepositoryImpl implements TeamRepository {
         }
         teamDto.setId(id);
         return teamDto;
-
     }
 
     @Override
     public void delete(Integer id) {
-        Optional<TeamDto> teamDtoOptional = getTeamById(id);
-        if (!teamDtoOptional.isPresent()) {
+        Optional<Team> teamOptional = getTeamById(id);
+        if (!teamOptional.isPresent()) {
             throw new RecordDoesNotExists(String.format("Team with ID %s does not exists", id));
         }
 
-        String sql = "DELETE FROM Team WHERE id = :id";
+        String sql = "UPDATE Team SET isDeleted = TRUE WHERE id = :id";
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("id", id);
+        jdbcTemplate.update(sql, parameters);
 
         int rowsAffected = jdbcTemplate.update(sql, parameters);
         if (rowsAffected == 0) {
@@ -130,22 +132,16 @@ public class TeamRepositoryImpl implements TeamRepository {
     @Override
     public List<TeamDto> search(Integer id, String name) {
         MapSqlParameterSource parameters = new MapSqlParameterSource();
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("WHERE isDeleted = FALSE");
+
         if (id != null) {
-            if (sb.length() > 0)
-                sb.append(" AND ");
-            sb.append("id = :id");
+            sb.append(" AND id = :id");
             parameters.addValue("id", id);
         }
         if (name != null) {
-            if (sb.length() > 0)
-                sb.append(" AND ");
-            sb.append("LOWER(name) LIKE LOWER(:name)");
+            sb.append(" AND LOWER(name) LIKE LOWER(:name)");
             parameters.addValue("name", "%" + name.trim() + "%");
         }
-
-        if (sb.length() > 0)
-            sb.insert(0, "WHERE ");
 
         String where = sb.toString();
 
@@ -158,6 +154,7 @@ public class TeamRepositoryImpl implements TeamRepository {
         Team team = new Team();
         team.setId(rs.getInt("id"));
         team.setName(rs.getString("name"));
+        team.setIsDeleted(rs.getBoolean("isDeleted"));
         return team;
     }
 }

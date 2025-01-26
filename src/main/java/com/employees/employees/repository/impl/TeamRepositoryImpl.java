@@ -1,9 +1,7 @@
 package com.employees.employees.repository.impl;
 
-import com.employees.employees.dto.TeamDto;
 import com.employees.employees.entity.Team;
 import com.employees.employees.exception.*;
-import com.employees.employees.mapper.TeamMapper;
 import com.employees.employees.repository.TeamRepository;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -16,7 +14,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Repository
 public class TeamRepositoryImpl implements TeamRepository {
@@ -27,7 +24,7 @@ public class TeamRepositoryImpl implements TeamRepository {
     }
 
     @Override
-    public TeamDto create(String name) {
+    public Team create(String name) {
         //check if team with given name already exists (name is unique)
         Optional<Team> teamDtoOptional = getTeamByName(name);
         if (teamDtoOptional.isPresent()) {
@@ -47,17 +44,16 @@ public class TeamRepositoryImpl implements TeamRepository {
 
         Integer generatedKey = keyHolder.getKey().intValue();
 
-        TeamDto saved = new TeamDto();
+        Team saved = new Team();
         saved.setId(generatedKey);
         saved.setName(name);
         return saved;
     }
 
     @Override
-    public List<TeamDto> getAll() {
+    public List<Team> getAll() {
         String sql = "SELECT * from Team WHERE isDeleted = FALSE";
-        List<Team> teams = jdbcTemplate.query(sql, this::teamDtoMapper);
-        return teams.stream().map(team -> TeamMapper.MAPPER.mapToTeamDto(team)).collect(Collectors.toList());
+        return jdbcTemplate.query(sql, this::teamDtoMapper);
     }
 
     @Override
@@ -87,28 +83,28 @@ public class TeamRepositoryImpl implements TeamRepository {
     }
 
     @Override
-    public TeamDto update(Integer id, TeamDto teamDto) {
+    public Team update(Integer id, Team team) {
         //find team by id
         Optional<Team> teamById = getTeamById(id);
         if (!teamById.isPresent()) {
             throw new RecordDoesNotExists("Team id does not exists");
         }
         //if try to update name with name which already exists
-        Optional<Team> teamByName = getTeamByName(teamDto.getName());
+        Optional<Team> teamByName = getTeamByName(team.getName());
         if (teamByName.isPresent() && !teamByName.get().getId().equals(id)) {
             throw new RecordAlreadyExistsException("Team name already exists");
         }
 
         String sql = "UPDATE Team SET name = :name WHERE id = :id";
         MapSqlParameterSource parameters = new MapSqlParameterSource();
-        parameters.addValue("name", teamDto.getName());
+        parameters.addValue("name", team.getName());
         parameters.addValue("id", id);
         int rowsAffected = jdbcTemplate.update(sql, parameters);
         if (rowsAffected == 0) {
             throw new UpdateFailedException("Update failed: no rows were affected");
         }
-        teamDto.setId(id);
-        return teamDto;
+        team.setId(id);
+        return team;
     }
 
     @Override
@@ -130,7 +126,7 @@ public class TeamRepositoryImpl implements TeamRepository {
     }
 
     @Override
-    public List<TeamDto> search(Integer id, String name) {
+    public List<Team> search(Integer id, String name) {
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         StringBuilder sb = new StringBuilder("WHERE isDeleted = FALSE");
 
@@ -146,8 +142,7 @@ public class TeamRepositoryImpl implements TeamRepository {
         String where = sb.toString();
 
         String sql = String.format("SELECT * FROM Team %s", where);
-        List<Team> teams = jdbcTemplate.query(sql.toString(), parameters, this::teamDtoMapper);
-        return teams.stream().map(team -> TeamMapper.MAPPER.mapToTeamDto(team)).collect(Collectors.toList());
+        return jdbcTemplate.query(sql.toString(), parameters, this::teamDtoMapper);
     }
 
     private Team teamDtoMapper(ResultSet rs, int rowNum) throws SQLException {

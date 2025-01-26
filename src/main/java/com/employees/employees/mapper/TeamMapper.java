@@ -10,4 +10,5 @@ public interface TeamMapper {
     TeamMapper MAPPER = Mappers.getMapper(TeamMapper.class);
 
     TeamDto mapToTeamDto(Team team);
+    Team mapToTeam(TeamDto teamDto);
 }

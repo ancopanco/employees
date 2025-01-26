@@ -25,7 +25,6 @@ public class TeamRepositoryImpl implements TeamRepository {
 
     @Override
     public Team create(String name) {
-        //check if team with given name already exists (name is unique)
         Optional<Team> teamDtoOptional = getTeamByName(name);
         if (teamDtoOptional.isPresent()) {
             throw new RecordAlreadyExistsException("Team name already exists");

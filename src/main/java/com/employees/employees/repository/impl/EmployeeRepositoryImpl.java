@@ -27,12 +27,12 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
 
     @Override
     public Employee create(Employee employee) {
-        Optional<Employee> employeeDtoOptional = getEmployeeById(employee.getId());
+        Optional<Employee> employeeDtoOptional = getById(employee.getId());
         if (employeeDtoOptional.isPresent()) {
             throw new RecordAlreadyExistsException("Employee id already exists");
         }
 
-        Optional<Team> team = teamRepository.getTeamById(employee.getIdTeam());
+        Optional<Team> team = teamRepository.getById(employee.getIdTeam());
 
         if (!team.isPresent() || (team.isPresent() && team.get().getIsDeleted())) {
             throw new RecordDoesNotExists("Team with idTeam does not exits");
@@ -58,7 +58,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
         return jdbcTemplate.query(sql, this::employeeMapper);
     }
     @Override
-    public Optional<Employee> getEmployeeById(Long id) {
+    public Optional<Employee> getById(Long id) {
         String sql = "SELECT * FROM Employee WHERE id = :id";
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("id", id);
@@ -72,12 +72,12 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
 
     @Override
     public Employee update(Long id, Employee employee) {
-        Optional<Employee> employeeByIdOptional = getEmployeeById(id);
+        Optional<Employee> employeeByIdOptional = getById(id);
         if (!employeeByIdOptional.isPresent()) {
             throw new RecordDoesNotExists("Employee id does not exists");
         }
         if (employee.getIdTeam() != null) {
-            Optional<Team> team = teamRepository.getTeamById(employee.getIdTeam());
+            Optional<Team> team = teamRepository.getById(employee.getIdTeam());
 
             if (!team.isPresent() || (team.isPresent() && team.get().getIsDeleted())) {
                 throw new RecordDoesNotExists("Team with idTeam does not exits");
@@ -97,13 +97,13 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
             throw new UpdateFailedException("Update failed: no rows were affected");
         }
 
-        return getEmployeeById(id)
+        return getById(id)
                 .orElseThrow(() -> new RecordDoesNotExists("Employee id does not exists"));
     }
 
     @Override
     public void delete(Long id) {
-        Optional<Employee> employeeDtoOptional = getEmployeeById(id);
+        Optional<Employee> employeeDtoOptional = getById(id);
         if (!employeeDtoOptional.isPresent()) {
             throw new RecordDoesNotExists(String.format("Employee with ID %s does not exists", id));
         }

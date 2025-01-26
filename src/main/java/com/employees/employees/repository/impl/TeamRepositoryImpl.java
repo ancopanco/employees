@@ -25,7 +25,7 @@ public class TeamRepositoryImpl implements TeamRepository {
 
     @Override
     public Team create(String name) {
-        Optional<Team> teamDtoOptional = getTeamByName(name);
+        Optional<Team> teamDtoOptional = getByName(name);
         if (teamDtoOptional.isPresent()) {
             throw new RecordAlreadyExistsException("Team name already exists");
         }
@@ -56,7 +56,7 @@ public class TeamRepositoryImpl implements TeamRepository {
     }
 
     @Override
-    public Optional<Team> getTeamById(Integer id) {
+    public Optional<Team> getById(Integer id) {
         String sql = "SELECT * FROM Team WHERE id = :id";
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("id", id);
@@ -69,7 +69,7 @@ public class TeamRepositoryImpl implements TeamRepository {
     }
 
     @Override
-    public Optional<Team> getTeamByName(String name) {
+    public Optional<Team> getByName(String name) {
         String sql = "SELECT * FROM Team WHERE name = :name";
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("name", name);
@@ -84,12 +84,12 @@ public class TeamRepositoryImpl implements TeamRepository {
     @Override
     public Team update(Integer id, Team team) {
         //find team by id
-        Optional<Team> teamById = getTeamById(id);
+        Optional<Team> teamById = getById(id);
         if (!teamById.isPresent()) {
             throw new RecordDoesNotExists("Team id does not exists");
         }
         //if try to update name with name which already exists
-        Optional<Team> teamByName = getTeamByName(team.getName());
+        Optional<Team> teamByName = getByName(team.getName());
         if (teamByName.isPresent() && !teamByName.get().getId().equals(id)) {
             throw new RecordAlreadyExistsException("Team name already exists");
         }
@@ -102,13 +102,13 @@ public class TeamRepositoryImpl implements TeamRepository {
         if (rowsAffected == 0) {
             throw new UpdateFailedException("Update failed: no rows were affected");
         }
-        return getTeamById(id)
+        return getById(id)
                 .orElseThrow(() -> new RecordDoesNotExists("Team id does not exists"));
     }
 
     @Override
     public void delete(Integer id) {
-        Optional<Team> teamOptional = getTeamById(id);
+        Optional<Team> teamOptional = getById(id);
         if (!teamOptional.isPresent()) {
             throw new RecordDoesNotExists(String.format("Team with ID %s does not exists", id));
         }

@@ -2,12 +2,14 @@ package com.employees.employees.service.impl;
 
 import com.employees.employees.dto.TeamDto;
 import com.employees.employees.entity.Team;
+import com.employees.employees.exception.RecordDoesNotExists;
 import com.employees.employees.mapper.TeamMapper;
 import com.employees.employees.repository.TeamRepository;
 import com.employees.employees.service.TeamService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +29,15 @@ public class TeamServiceImpl implements TeamService {
     public List<TeamDto> getAll() {
         List<Team> teams =teamRepository.getAll();
         return teams.stream().map(team -> TeamMapper.MAPPER.mapToTeamDto(team)).collect(Collectors.toList());
+    }
+
+    @Override
+    public TeamDto getById(Integer id) {
+        Optional<Team> team = teamRepository.getById(id);
+        if (!team.isPresent()) {
+            throw new RecordDoesNotExists("Team with this id does not exists.");
+        }
+        return TeamMapper.MAPPER.mapToTeamDto(team.get());
     }
 
     @Override

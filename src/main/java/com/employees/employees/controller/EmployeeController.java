@@ -1,9 +1,11 @@
 package com.employees.employees.controller;
 
 import com.employees.employees.dto.EmployeeDto;
+import com.employees.employees.dto.TeamDto;
 import com.employees.employees.exception.UpdateFailedException;
 import com.employees.employees.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +53,26 @@ public class EmployeeController {
     public ResponseEntity<List<EmployeeDto>> getAll() {
         List<EmployeeDto> employees = employeeService.getAll();
         return new ResponseEntity<>(employees, HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Get employee by id",
+            description = "Get employee by id from the database."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Get succeed."
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Get failed - Employee with this id does not exist."
+    )
+    @GetMapping("/{id}")
+    public ResponseEntity<EmployeeDto> getById(
+            @Parameter(description = "Employee id", required = true)
+            @PathVariable("id") Long id) {
+        EmployeeDto employeeDto = employeeService.getById(id);
+        return new ResponseEntity<>(employeeDto, HttpStatus.OK);
     }
 
     @Operation(

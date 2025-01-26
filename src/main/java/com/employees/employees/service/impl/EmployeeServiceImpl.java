@@ -2,12 +2,14 @@ package com.employees.employees.service.impl;
 
 import com.employees.employees.dto.EmployeeDto;
 import com.employees.employees.entity.Employee;
+import com.employees.employees.exception.RecordDoesNotExists;
 import com.employees.employees.mapper.EmployeeMapper;
 import com.employees.employees.repository.EmployeeRepository;
 import com.employees.employees.service.EmployeeService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +31,15 @@ public class EmployeeServiceImpl implements EmployeeService {
     public List<EmployeeDto> getAll() {
         List<Employee> employees = employeeRepository.getAll();
         return employees.stream().map(employee -> EmployeeMapper.MAPPER.mapToEmployeeDto(employee)).collect(Collectors.toList());
+    }
+
+    @Override
+    public EmployeeDto getById(Long id) {
+        Optional<Employee> employee = employeeRepository.getById(id);
+        if (!employee.isPresent()) {
+            throw new RecordDoesNotExists("Employee with this id does not exists.");
+        }
+        return EmployeeMapper.MAPPER.mapToEmployeeDto(employee.get());
     }
 
     @Override

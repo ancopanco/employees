@@ -50,12 +50,31 @@ public class TeamController {
             responseCode = "200",
             description = "Get succeed."
     )
-    @GetMapping
+    @GetMapping()
     public ResponseEntity<List<TeamDto>> getAll() {
         List<TeamDto> teams = teamService.getAll();
         return new ResponseEntity<>(teams, HttpStatus.OK);
     }
 
+    @Operation(
+            summary = "Get team by id",
+            description = "Get team by id from the database."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Get succeed."
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Get failed - Employee with this id does not exist."
+    )
+    @GetMapping("/{id}")
+    public ResponseEntity<TeamDto> getById(
+            @Parameter(description = "Team id", required = true)
+            @PathVariable("id") Integer id) {
+        TeamDto team = teamService.getById(id);
+        return new ResponseEntity<>(team, HttpStatus.OK);
+    }
     @Operation(
             summary = "Update team",
             description = "Update particular team in the database."

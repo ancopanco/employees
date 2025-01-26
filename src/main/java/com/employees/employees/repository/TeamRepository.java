@@ -8,8 +8,8 @@ import java.util.Optional;
 public interface TeamRepository {
     Team create(String name);
     List<Team> getAll();
-    Optional<Team> getTeamById(Integer id);
-    Optional<Team> getTeamByName(String name);
+    Optional<Team> getById(Integer id);
+    Optional<Team> getByName(String name);
     Team update(Integer id, Team teamDto);
     void delete(Integer id);
     List<Team> search(Integer id, String name);

@@ -57,7 +57,7 @@ public class TeamRepositoryImpl implements TeamRepository {
 
     @Override
     public Optional<Team> getById(Integer id) {
-        String sql = "SELECT * FROM Team WHERE id = :id";
+        String sql = "SELECT * FROM Team WHERE isDeleted = FALSE AND id = :id";
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("id", id);
         try {
@@ -70,7 +70,7 @@ public class TeamRepositoryImpl implements TeamRepository {
 
     @Override
     public Optional<Team> getByName(String name) {
-        String sql = "SELECT * FROM Team WHERE name = :name";
+        String sql = "SELECT * FROM Team WHERE isDeleted = FALSE AND name = :name";
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("name", name);
         try {

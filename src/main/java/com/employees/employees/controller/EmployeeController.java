@@ -6,6 +6,8 @@ import com.employees.employees.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/employees")
 public class EmployeeController {
+    private static final Logger logger = LoggerFactory.getLogger(EmployeeController.class);
     private final EmployeeService employeeService;
 
     public EmployeeController(EmployeeService employeeService) {
@@ -40,7 +43,9 @@ public class EmployeeController {
     )
     @PostMapping
     public ResponseEntity<EmployeeDto> createEmployee(@Valid @RequestBody EmployeeDto employeeDto) {
+        logger.info("Received request to create a new employee: {}", employeeDto);
         EmployeeDto saved = employeeService.create(employeeDto);
+        logger.info("Employee created successfully with ID: {}", saved.getId());
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
     }
 
@@ -54,7 +59,9 @@ public class EmployeeController {
     )
     @GetMapping
     public ResponseEntity<List<EmployeeDto>> getAll() {
+        logger.info("Received request to fetch all employees.");
         List<EmployeeDto> employees = employeeService.getAll();
+        logger.info("Fetched {} employees from the database.", employees.size());
         return new ResponseEntity<>(employees, HttpStatus.OK);
     }
 
@@ -74,7 +81,9 @@ public class EmployeeController {
     public ResponseEntity<EmployeeDto> getById(
             @Parameter(description = "Employee id", required = true)
             @PathVariable("id") Long id) {
+        logger.info("Received request to fetch employee with ID: {}", id);
         EmployeeDto employeeDto = employeeService.getById(id);
+        logger.info("Fetched employee: {}", employeeDto);
         return new ResponseEntity<>(employeeDto, HttpStatus.OK);
     }
 
@@ -96,10 +105,13 @@ public class EmployeeController {
     )
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeDto> updateEmployee(@PathVariable("id") Long id, @Valid @RequestBody EmployeeDto employeeDto) {
+        logger.info("Received request to update employee with ID: {}. Payload: {}", id, employeeDto);
         if (employeeDto.getId() != null && !id.equals(employeeDto.getId())) {
+            logger.error("ID in URL ({}) does not match ID in request body ({}).", id, employeeDto.getId());
             throw new UpdateFailedException("ID in URL does not match ID in the request body");
         }
         EmployeeDto updated = employeeService.update(id, employeeDto);
+        logger.info("Employee updated successfully with ID: {}", updated.getId());
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
@@ -117,7 +129,9 @@ public class EmployeeController {
     )
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteEmployee(@PathVariable("id") Long id) {
+        logger.info("Received request to delete employee with ID: {}", id);
         employeeService.delete(id);
+        logger.info("Employee with ID: {} deleted successfully.", id);
         return new ResponseEntity<>("User successfully deleted", HttpStatus.OK);
     }
 
@@ -135,7 +149,9 @@ public class EmployeeController {
                                                 @RequestParam(required = false) String name,
                                                 @RequestParam(required = false) Boolean isTeamLead,
                                                 @RequestParam(required = false) Integer idTeam) {
+        logger.info("Received search request with parameters: id={}, name={}, isTeamLead={}, idTeam={}", id, name, isTeamLead, idTeam);
         List<EmployeeDto> employees = employeeService.search(id, name, isTeamLead, idTeam);
+        logger.info("Search completed. Found {} employees.", employees.size());
         return new ResponseEntity<>(employees , HttpStatus.OK);
     }
 }

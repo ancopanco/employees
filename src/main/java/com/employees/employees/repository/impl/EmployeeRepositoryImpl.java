@@ -5,6 +5,8 @@ import com.employees.employees.entity.Team;
 import com.employees.employees.exception.*;
 import com.employees.employees.repository.EmployeeRepository;
 import com.employees.employees.repository.TeamRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -17,6 +19,7 @@ import java.util.Optional;
 
 @Repository
 public class EmployeeRepositoryImpl implements EmployeeRepository {
+    private static final Logger logger = LoggerFactory.getLogger(EmployeeRepositoryImpl.class);
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final TeamRepository teamRepository;
 
@@ -29,13 +32,15 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
     public Employee create(Employee employee) {
         Optional<Employee> employeeDtoOptional = getById(employee.getId());
         if (employeeDtoOptional.isPresent()) {
-            throw new RecordAlreadyExistsException("Employee id already exists");
+            logger.error("Employee creation failed: ID {} already exists", employee.getId());
+            throw new RecordAlreadyExistsException(String.format("Employee ID %s already exists", employee.getId()));
         }
 
         Optional<Team> team = teamRepository.getById(employee.getIdTeam());
 
         if (!team.isPresent() || (team.isPresent() && team.get().getIsDeleted())) {
-            throw new RecordDoesNotExists("Team with idTeam does not exits");
+            logger.error("Team with ID {} does not exist or is deleted", employee.getIdTeam());
+            throw new RecordDoesNotExists(String.format("Team ID %s does not exist", employee.getIdTeam()));
         }
 
         String sql = "INSERT INTO Employee (id, name, isTeamLead, idTeam) VALUES (:id, :name, :isTeamLead, :idTeam)";
@@ -47,6 +52,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
 
         int rowsAffected = jdbcTemplate.update(sql, parameters);
         if (rowsAffected == 0) {
+            logger.error("Employee creation failed: no rows were affected");
             throw new CreateFailedException("Create failed: no rows were affected");
         }
         return employee;
@@ -66,6 +72,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
             Employee employee = jdbcTemplate.queryForObject(sql, parameters, this::employeeMapper);
             return Optional.of(employee);
         } catch (EmptyResultDataAccessException e) {
+            logger.warn("No employee found with ID: {}", id);
             return Optional.empty();
         }
     }
@@ -74,13 +81,15 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
     public Employee update(Long id, Employee employee) {
         Optional<Employee> employeeByIdOptional = getById(id);
         if (!employeeByIdOptional.isPresent()) {
-            throw new RecordDoesNotExists("Employee id does not exists");
+            logger.error("Update failed: Employee ID {} does not exist", id);
+            throw new RecordDoesNotExists(String.format("Employee ID %s does not exists", id));
         }
         if (employee.getIdTeam() != null) {
             Optional<Team> team = teamRepository.getById(employee.getIdTeam());
 
             if (!team.isPresent() || (team.isPresent() && team.get().getIsDeleted())) {
-                throw new RecordDoesNotExists("Team with idTeam does not exits");
+                logger.error("Update failed: Team ID {} does not exist or is deleted", employee.getIdTeam());
+                throw new RecordDoesNotExists(String.format("Team ID %s does not exists or is deleted", employee.getIdTeam()));
             }
         }
 
@@ -94,17 +103,19 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
 
         int rowsAffected = jdbcTemplate.update(sql, parameters);
         if (rowsAffected == 0) {
-            throw new UpdateFailedException("Update failed: no rows were affected");
+            logger.error("Update failed: no rows were affected for employee ID {}", id);
+            throw new UpdateFailedException(String.format("Failed to update employee with ID ", id));
         }
 
         return getById(id)
-                .orElseThrow(() -> new RecordDoesNotExists("Employee id does not exists"));
+                .orElseThrow(() -> new RecordDoesNotExists(String.format("Employee ID %s already exists", id)));
     }
 
     @Override
     public void delete(Long id) {
         Optional<Employee> employeeDtoOptional = getById(id);
         if (!employeeDtoOptional.isPresent()) {
+            logger.error("Delete failed: Employee ID {} does not exist", id);
             throw new RecordDoesNotExists(String.format("Employee with ID %s does not exists", id));
         }
 
@@ -114,7 +125,8 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
 
         int rowsAffected = jdbcTemplate.update(sql, parameters);
         if (rowsAffected == 0) {
-            throw new DeleteFailedException(String.format("Failed to delete team with id ", id));
+            logger.error("Delete failed: no rows were affected for employee ID {}", id);
+            throw new DeleteFailedException(String.format("Failed to delete team with ID ", id));
         }
     }
 

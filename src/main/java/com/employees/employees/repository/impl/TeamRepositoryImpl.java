@@ -94,7 +94,7 @@ public class TeamRepositoryImpl implements TeamRepository {
         Optional<Team> teamById = getById(id);
         if (!teamById.isPresent()) {
             logger.error("Update failed: team with ID {} does not exist", id);
-            throw new RecordDoesNotExists(String.format("Team ID %s does not exists", id));
+            throw new RecordDoesNotExists(String.format("Team ID %s does not exist", id));
         }
 
         Optional<Team> teamByName = getByName(team.getName());

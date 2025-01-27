@@ -39,7 +39,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
         Optional<Team> team = teamRepository.getById(employee.getIdTeam());
 
         if (!team.isPresent() || (team.isPresent() && team.get().getIsDeleted())) {
-            logger.error("Team with ID {} does not exist or is deleted", employee.getIdTeam());
+            logger.error("Team with ID {} does not exist", employee.getIdTeam());
             throw new RecordDoesNotExists(String.format("Team ID %s does not exist", employee.getIdTeam()));
         }
 
@@ -88,8 +88,8 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
             Optional<Team> team = teamRepository.getById(employee.getIdTeam());
 
             if (!team.isPresent() || (team.isPresent() && team.get().getIsDeleted())) {
-                logger.error("Update failed: Team ID {} does not exist or is deleted", employee.getIdTeam());
-                throw new RecordDoesNotExists(String.format("Team ID %s does not exists or is deleted", employee.getIdTeam()));
+                logger.error("Update failed: Team ID {} does not exist", employee.getIdTeam());
+                throw new RecordDoesNotExists(String.format("Team ID %s does not exist", employee.getIdTeam()));
             }
         }
 

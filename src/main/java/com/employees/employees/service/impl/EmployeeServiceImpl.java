@@ -37,7 +37,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeDto getById(Long id) {
         Optional<Employee> employee = employeeRepository.getById(id);
         if (!employee.isPresent()) {
-            throw new RecordDoesNotExists("Employee with this id does not exists.");
+            throw new RecordDoesNotExists(String.format("Team ID %s does not exist", id));
         }
         return EmployeeMapper.MAPPER.mapToEmployeeDto(employee.get());
     }

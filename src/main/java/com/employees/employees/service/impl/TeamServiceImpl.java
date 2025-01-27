@@ -35,7 +35,7 @@ public class TeamServiceImpl implements TeamService {
     public TeamDto getById(Integer id) {
         Optional<Team> team = teamRepository.getById(id);
         if (!team.isPresent()) {
-            throw new RecordDoesNotExists("Team with this id does not exists.");
+            throw new RecordDoesNotExists(String.format("Team ID %s does not exist", id));
         }
         return TeamMapper.MAPPER.mapToTeamDto(team.get());
     }
